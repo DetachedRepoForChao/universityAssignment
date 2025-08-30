@@ -23,7 +23,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // 创建同步日志
     const log = await prisma.syncLog.create({
       data: {
-        source: "UNIVERSITY_DATA",
+        source: "OPEN_DATA",
         status: "running"
       }
     });
