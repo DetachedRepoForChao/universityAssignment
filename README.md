@@ -1,40 +1,91 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# University Application Tracker
+
+Modern full-stack web app for tracking university applications.
+
+## Tech Stack
+- Next.js (Pages Router) + TypeScript
+- Tailwind CSS
+- Prisma ORM (SQLite dev, PostgreSQL ready)
+- JWT auth with role-based access (student, parent, admin)
 
 ## Getting Started
-
-First, run the development server:
-
+1. Install deps
+```bash
+npm install
+```
+2. Env vars
+```bash
+DATABASE_URL='file:./dev.db'
+JWT_SECRET='dev_secret_change_me'
+# Optional integrations
+COMMON_APP_TOKEN='your_common_app_token'
+OPEN_DATA_KEY='your_open_data_key'
+```
+3. DB migrate and generate
+```bash
+npx prisma migrate dev --name init
+npx prisma generate
+```
+4. Dev server
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+5. Seed demo data (optional)
+```bash
+npm run seed
+```
+6. Demo tokens
+```bash
+curl "/api/auth/demo-login?role=student"
+curl "/api/auth/demo-login?role=parent"
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## API Overview
+- Auth: `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/logout`
+- Student: `GET/POST /api/student/applications`, `PUT/DELETE /api/student/applications/[id]`
+- Parent: `GET /api/parent/students`, `GET /api/parent/applications?studentId=...`
+- University: `GET /api/universities/search?q=&country=&state=&city=&minRank=&maxRank=&minAcceptance=&maxAcceptance`
+- Admin: `POST /api/admin/sync-universities` (requires admin)
+  - `GET /api/admin/sync-status` (requires admin)
+  - `POST /api/admin/send-deadline-reminders` (requires admin)
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+## Project Structure
+```
+/src
+  /pages
+    /api
+      /auth
+      /admin
+      /student
+      /parent
+      /universities
+    dashboard.tsx
+    /parent/view.tsx
+    /admin/sync.tsx
+    /university/search.tsx
+    /application/[id].tsx
+  /services
+    /integrations
+  /lib
+/prisma
+```
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+## Switch to PostgreSQL
+- Update `.env` `DATABASE_URL` to a Postgres connection string
+- Re-run `npx prisma migrate dev`
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
+## Feature Flows
+- Login/Logout: cookie-based JWT; protected routes via middleware (`/dashboard`, `/parent/view`, `/admin/*`).
+- Parent view: choose a linked student; fetch only that student's applications via `studentId` filter.
+- Application detail: timeline (deadline/submitted/decision), requirement checklist, progress bar; 7-day due alerts.
+- University search: filter by location/rank/acceptance; integration-ready for Common App/Open Data.
+- Admin sync: configure `COMMON_APP_TOKEN` or `OPEN_DATA_KEY`, open `/admin/sync`, click “开始同步” to fetch+upsert.
+  - The page polls `/api/admin/sync-status` every 3s to show progress and errors.
+  - Integrations use exponential backoff retries.
+- Uploads: `GET/POST /api/student/documents` supports essay/transcript uploads (multipart/form-data; fields: applicationId, docType, file)
+- Emails: admin can trigger due-in-7-days reminders to students (`/api/admin/send-deadline-reminders`)
 
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+## Testing
+```bash
+npm test
+```

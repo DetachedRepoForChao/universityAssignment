@@ -1,0 +1,173 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Student {
+  id              String          @id @default(uuid())
+  name            String
+  email           String          @unique
+  passwordHash    String
+  graduationYear  Int
+  gpa             Decimal?
+  satScore        Int?
+  actScore        Int?
+  targetCountries Json?
+  intendedMajors  Json?
+  applications    Application[]
+  parentLinks     StudentParent[]
+}
+
+model Parent {
+  id           String          @id @default(uuid())
+  name         String
+  email        String          @unique
+  passwordHash String
+  phone        String?
+  createdAt    DateTime        @default(now())
+  studentLinks StudentParent[]
+}
+
+model Admin {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String   @default("admin") // 可以扩展为 super_admin, content_admin 等
+  permissions  Json?    // 存储权限配置
+  createdAt    DateTime @default(now())
+  lastLoginAt DateTime?
+}
+
+model StudentParent {
+  id           String   @id @default(uuid())
+  studentId    String
+  parentId     String
+  relationship String?
+  createdAt    DateTime @default(now())
+  parent       Parent   @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  student      Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, parentId])
+}
+
+model University {
+  id                String            @id @default(uuid())
+  externalId        String?           @unique
+  source            UniversitySource?
+  name              String
+  country           String?
+  state             String?
+  city              String?
+  usNewsRanking     Int?
+  acceptanceRate    Decimal?
+  applicationSystem String?
+  tuitionInState    Decimal?
+  tuitionOutState   Decimal?
+  applicationFee    Decimal?
+  deadlines         Json?
+  lastSyncedAt      DateTime?
+  raw               Json?
+  isActive          Boolean           @default(true)
+  applications      Application[]
+}
+
+model Application {
+  id                    String                   @id @default(uuid())
+  studentId             String
+  universityId          String
+  applicationType       ApplicationType?
+  deadline              DateTime?
+  status                ApplicationStatus?
+  submittedDate         DateTime?
+  decisionDate          DateTime?
+  decisionType          String?
+  notes                 String?
+  createdAt             DateTime                 @default(now())
+  externalApplicationId String?
+  syncedAt              DateTime?
+  university            University               @relation(fields: [universityId], references: [id])
+  student               Student                  @relation(fields: [studentId], references: [id])
+  documents             ApplicationDocument[]
+  appNotes              ApplicationNote[]
+  requirements          ApplicationRequirement[]
+
+  @@index([studentId])
+  @@index([universityId])
+}
+
+model ApplicationRequirement {
+  id              String      @id @default(uuid())
+  applicationId   String
+  requirementType String
+  status          String?
+  deadline        DateTime?
+  notes           String?
+  application     Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+}
+
+model ApplicationNote {
+  id            String      @id @default(uuid())
+  applicationId String
+  authorType    String
+  authorId      String
+  content       String
+  createdAt     DateTime    @default(now())
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+}
+
+model ApplicationDocument {
+  id            String      @id @default(uuid())
+  applicationId String
+  docType       String
+  filename      String
+  mimeType      String
+  sizeBytes     Int
+  storagePath   String
+  uploadedAt    DateTime    @default(now())
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+}
+
+model SyncLog {
+  id         String           @id @default(uuid())
+  source     UniversitySource
+  startedAt  DateTime         @default(now())
+  finishedAt DateTime?
+  status     String
+  error      String?
+  stats      Json?
+  cursor     String?
+}
+
+enum ApplicationType {
+  EARLY_DECISION
+  EARLY_ACTION
+  REGULAR_DECISION
+  ROLLING_ADMISSION
+}
+
+enum ApplicationStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  SUBMITTED
+  UNDER_REVIEW
+  ACCEPTED
+  REJECTED
+  WAITLISTED
+}
+
+enum UniversitySource {
+  COMMON_APP
+  OPEN_DATA
+}
