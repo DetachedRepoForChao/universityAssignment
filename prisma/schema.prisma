@@ -4,7 +4,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -21,6 +21,8 @@ model Student {
   intendedMajors  Json?
   applications    Application[]
   parentLinks     StudentParent[]
+  communications  CommunicationRecord[]
+  observations    ObservationRecord[]
 }
 
 model Parent {
@@ -31,6 +33,8 @@ model Parent {
   phone        String?
   createdAt    DateTime        @default(now())
   studentLinks StudentParent[]
+  communications CommunicationRecord[]
+  observations  ObservationRecord[]
 }
 
 model Admin {
@@ -148,6 +152,41 @@ model SyncLog {
   error      String?
   stats      Json?
   cursor     String?
+}
+
+model CommunicationRecord {
+  id         String   @id @default(uuid())
+  studentId  String
+  parentId   String
+  title      String
+  content    String
+  type       String   // 沟通类型：电话、邮件、面谈等
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime?
+  
+  student    Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  parent     Parent  @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  
+  @@index([studentId])
+  @@index([parentId])
+}
+
+model ObservationRecord {
+  id         String   @id @default(uuid())
+  studentId  String
+  parentId   String
+  title      String
+  content    String
+  category   String   // 观察类别：学习态度、心理健康、时间管理等
+  priority   String   @default("medium") // 优先级：low, medium, high
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime?
+  
+  student    Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  parent     Parent  @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  
+  @@index([studentId])
+  @@index([parentId])
 }
 
 enum ApplicationType {

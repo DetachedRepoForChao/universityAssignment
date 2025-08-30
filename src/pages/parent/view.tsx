@@ -27,6 +27,23 @@ export default function ParentView() {
   const [editingNote, setEditingNote] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
   
+  // 新增状态
+  const [communications, setCommunications] = useState<any[]>([]);
+  const [observations, setObservations] = useState<any[]>([]);
+  const [showCommunicationForm, setShowCommunicationForm] = useState(false);
+  const [showObservationForm, setShowObservationForm] = useState(false);
+  const [communicationForm, setCommunicationForm] = useState({
+    title: '',
+    content: '',
+    type: '电话'
+  });
+  const [observationForm, setObservationForm] = useState({
+    title: '',
+    content: '',
+    category: '学习态度',
+    priority: 'medium'
+  });
+  
 
 
   useEffect(() => {
@@ -41,9 +58,18 @@ export default function ParentView() {
     const q = new URLSearchParams({ studentId: selected }).toString();
     setLoading(true);
     setError(null);
-    fetch(`/api/parent/applications?${q}`)
-      .then(async r => { if (!r.ok) throw new Error(await r.text()); return r.json(); })
-      .then(setApps)
+    
+    // 并行加载申请、沟通记录和观察记录
+    Promise.all([
+      fetch(`/api/parent/applications?${q}`).then(async r => { if (!r.ok) throw new Error(await r.text()); return r.json(); }),
+      fetch(`/api/parent/communications?${q}`).then(async r => { if (!r.ok) return []; return r.json(); }),
+      fetch(`/api/parent/observations?${q}`).then(async r => { if (!r.ok) return []; return r.json(); })
+    ])
+      .then(([appsData, commsData, obsData]) => {
+        setApps(appsData);
+        setCommunications(commsData);
+        setObservations(obsData);
+      })
       .catch(e => { setError(e.message || "加载失败"); setApps([]); })
       .finally(() => setLoading(false));
   }, [selected]);
@@ -321,24 +347,66 @@ export default function ParentView() {
               <div>
                 <h4 className="font-medium text-gray-900 mb-3">沟通记录</h4>
                 <div className="space-y-3">
-                  <div className="border border-gray-200 rounded p-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-700">申请进度讨论</span>
-                      <span className="text-xs text-gray-500">2024-01-15</span>
-                    </div>
-                    <p className="text-sm text-gray-600">与学生讨论了MIT和Stanford的申请进度，确认所有材料已提交。</p>
-                  </div>
-                  
-                  <div className="border border-gray-200 rounded p-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-700">财务规划</span>
-                      <span className="text-xs text-gray-500">2024-01-10</span>
-                    </div>
-                    <p className="text-sm text-gray-600">讨论了学费预算和奖学金申请策略。</p>
-                  </div>
+                  {communications.length > 0 ? (
+                    communications.map((comm) => (
+                      <div key={comm.id} className="border border-gray-200 rounded p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-gray-700">{comm.title}</span>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">{comm.type}</span>
+                            <span className="text-xs text-gray-500">{new Date(comm.createdAt).toLocaleDateString('zh-CN')}</span>
+                          </div>
+                        </div>
+                        <p className="text-sm text-gray-600">{comm.content}</p>
+                        <div className="flex justify-end space-x-2 mt-2">
+                          <button
+                            onClick={() => {
+                              setCommunicationForm({
+                                title: comm.title,
+                                content: comm.content,
+                                type: comm.type
+                              });
+                              setShowCommunicationForm(true);
+                            }}
+                            className="text-xs bg-blue-500 text-white rounded px-2 py-1"
+                          >
+                            编辑
+                          </button>
+                          <button
+                            onClick={async () => {
+                              if (confirm('确定要删除这条沟通记录吗？')) {
+                                try {
+                                  await fetch(`/api/parent/communications?id=${comm.id}`, {
+                                    method: 'DELETE'
+                                  });
+                                  // 重新加载数据
+                                  const q = new URLSearchParams({ studentId: selected }).toString();
+                                  const res = await fetch(`/api/parent/communications?${q}`);
+                                  if (res.ok) {
+                                    const updatedComms = await res.json();
+                                    setCommunications(updatedComms);
+                                  }
+                                } catch (err) {
+                                  console.error('Failed to delete communication:', err);
+                                }
+                              }
+                            }}
+                            className="text-xs bg-red-500 text-white rounded px-2 py-1"
+                          >
+                            删除
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-gray-500 text-sm text-center py-4">暂无沟通记录</div>
+                  )}
                 </div>
                 
-                <button className="mt-3 w-full px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700">
+                <button 
+                  onClick={() => setShowCommunicationForm(true)}
+                  className="mt-3 w-full px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
+                >
                   添加沟通记录
                 </button>
               </div>
@@ -347,27 +415,276 @@ export default function ParentView() {
               <div>
                 <h4 className="font-medium text-gray-900 mb-3">重要观察</h4>
                 <div className="space-y-3">
-                  <div className="border border-gray-200 rounded p-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-700">申请压力</span>
-                      <span className="text-xs text-gray-500">2024-01-12</span>
-                    </div>
-                    <p className="text-sm text-gray-600">学生表现出一定的申请压力，需要关注心理健康。</p>
-                  </div>
-                  
-                  <div className="border border-gray-200 rounded p-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-700">时间管理</span>
-                      <span className="text-xs text-gray-500">2024-01-08</span>
-                    </div>
-                    <p className="text-sm text-gray-600">学生时间管理能力有所提升，能够按时完成申请任务。</p>
-                  </div>
+                  {observations.length > 0 ? (
+                    observations.map((obs) => (
+                      <div key={obs.id} className="border border-gray-200 rounded p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-gray-700">{obs.title}</span>
+                          <div className="flex items-center space-x-2">
+                            <span className={`text-xs px-2 py-1 rounded ${
+                              obs.priority === 'high' ? 'bg-red-100 text-red-800' :
+                              obs.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-green-100 text-green-800'
+                            }`}>
+                              {obs.priority === 'high' ? '高优先级' : 
+                               obs.priority === 'medium' ? '中优先级' : '低优先级'}
+                            </span>
+                            <span className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded">{obs.category}</span>
+                            <span className="text-xs text-gray-500">{new Date(obs.createdAt).toLocaleDateString('zh-CN')}</span>
+                          </div>
+                        </div>
+                        <p className="text-sm text-gray-600">{obs.content}</p>
+                        <div className="flex justify-end space-x-2 mt-2">
+                          <button
+                            onClick={() => {
+                              setObservationForm({
+                                title: obs.title,
+                                content: obs.content,
+                                category: obs.category,
+                                priority: obs.priority
+                              });
+                              setShowObservationForm(true);
+                            }}
+                            className="text-xs bg-blue-500 text-white rounded px-2 py-1"
+                          >
+                            编辑
+                          </button>
+                          <button
+                            onClick={async () => {
+                              if (confirm('确定要删除这条观察记录吗？')) {
+                                try {
+                                  await fetch(`/api/parent/observations?id=${obs.id}`, {
+                                    method: 'DELETE'
+                                  });
+                                  // 重新加载数据
+                                  const q = new URLSearchParams({ studentId: selected }).toString();
+                                  const res = await fetch(`/api/parent/observations?${q}`);
+                                  if (res.ok) {
+                                    const updatedObs = await res.json();
+                                    setObservations(updatedObs);
+                                  }
+                                } catch (err) {
+                                  console.error('Failed to delete observation:', err);
+                                }
+                              }
+                            }}
+                            className="text-xs bg-red-500 text-white rounded px-2 py-1"
+                          >
+                            删除
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-gray-500 text-sm text-center py-4">暂无观察记录</div>
+                  )}
                 </div>
                 
-                <button className="mt-3 w-full px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700">
+                <button 
+                  onClick={() => setShowObservationForm(true)}
+                  className="mt-3 w-full px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700"
+                >
                   添加观察记录
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* 沟通记录表单模态框 */}
+      {showCommunicationForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-medium mb-4">添加沟通记录</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">标题</label>
+                <input
+                  type="text"
+                  value={communicationForm.title}
+                  onChange={(e) => setCommunicationForm({...communicationForm, title: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  placeholder="沟通记录标题"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">内容</label>
+                <textarea
+                  value={communicationForm.content}
+                  onChange={(e) => setCommunicationForm({...communicationForm, content: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 h-24"
+                  placeholder="详细描述沟通内容"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">沟通类型</label>
+                <select
+                  value={communicationForm.type}
+                  onChange={(e) => setCommunicationForm({...communicationForm, type: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                >
+                  <option value="电话">电话</option>
+                  <option value="邮件">邮件</option>
+                  <option value="面谈">面谈</option>
+                  <option value="微信">微信</option>
+                  <option value="其他">其他</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                onClick={() => {
+                  setShowCommunicationForm(false);
+                  setCommunicationForm({ title: '', content: '', type: '电话' });
+                }}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                取消
+              </button>
+              <button
+                onClick={async () => {
+                  if (!communicationForm.title.trim() || !communicationForm.content.trim()) {
+                    alert('请填写完整信息');
+                    return;
+                  }
+                  
+                  try {
+                    const response = await fetch('/api/parent/communications', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        studentId: selected,
+                        ...communicationForm
+                      })
+                    });
+                    
+                    if (response.ok) {
+                      // 重新加载数据
+                      const q = new URLSearchParams({ studentId: selected }).toString();
+                      const res = await fetch(`/api/parent/communications?${q}`);
+                      if (res.ok) {
+                        const updatedComms = await res.json();
+                        setCommunications(updatedComms);
+                      }
+                      
+                      setShowCommunicationForm(false);
+                      setCommunicationForm({ title: '', content: '', type: '电话' });
+                    }
+                  } catch (err) {
+                    console.error('Failed to add communication:', err);
+                    alert('添加失败，请重试');
+                  }
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                保存
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* 观察记录表单模态框 */}
+      {showObservationForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-medium mb-4">添加观察记录</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">标题</label>
+                <input
+                  type="text"
+                  value={observationForm.title}
+                  onChange={(e) => setObservationForm({...observationForm, title: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  placeholder="观察记录标题"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">内容</label>
+                <textarea
+                  value={observationForm.content}
+                  onChange={(e) => setObservationForm({...observationForm, content: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 h-24"
+                  placeholder="详细描述观察内容"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">观察类别</label>
+                <select
+                  value={observationForm.category}
+                  onChange={(e) => setObservationForm({...observationForm, category: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                >
+                  <option value="学习态度">学习态度</option>
+                  <option value="心理健康">心理健康</option>
+                  <option value="时间管理">时间管理</option>
+                  <option value="申请进度">申请进度</option>
+                  <option value="其他">其他</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">优先级</label>
+                <select
+                  value={observationForm.priority}
+                  onChange={(e) => setObservationForm({...observationForm, priority: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                >
+                  <option value="low">低优先级</option>
+                  <option value="medium">中优先级</option>
+                  <option value="high">高优先级</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                onClick={() => {
+                  setShowObservationForm(false);
+                  setObservationForm({ title: '', content: '', category: '学习态度', priority: 'medium' });
+                }}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                取消
+              </button>
+              <button
+                onClick={async () => {
+                  if (!observationForm.title.trim() || !observationForm.content.trim()) {
+                    alert('请填写完整信息');
+                    return;
+                  }
+                  
+                  try {
+                    const response = await fetch('/api/parent/observations', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        studentId: selected,
+                        ...observationForm
+                      })
+                    });
+                    
+                    if (response.ok) {
+                      // 重新加载数据
+                      const q = new URLSearchParams({ studentId: selected }).toString();
+                      const res = await fetch(`/api/parent/observations?${q}`);
+                      if (res.ok) {
+                        const updatedObs = await res.json();
+                        setObservations(updatedObs);
+                      }
+                      
+                      setShowObservationForm(false);
+                      setObservationForm({ title: '', content: '', category: '学习态度', priority: 'medium' });
+                    }
+                  } catch (err) {
+                    console.error('Failed to add observation:', err);
+                    alert('添加失败，请重试');
+                  }
+                }}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+              >
+                保存
+              </button>
             </div>
           </div>
         </div>
