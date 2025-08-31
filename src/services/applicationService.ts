@@ -1,6 +1,7 @@
-import { prisma } from "../lib/prisma";
+import { getSupabasePrisma } from "../lib/prisma-supabase";
 
 export async function getStudentApplications(studentId: string) {
+  const prisma = await getSupabasePrisma();
   return prisma.application.findMany({
     where: { studentId },
     include: { university: true, requirements: true },
@@ -14,6 +15,7 @@ export async function createApplication(params: {
   applicationType?: "EARLY_DECISION" | "EARLY_ACTION" | "REGULAR_DECISION" | "ROLLING_ADMISSION" | null;
   deadline?: Date | null;
 }) {
+  const prisma = await getSupabasePrisma();
   return prisma.application.create({
     data: {
       studentId: params.studentId,
@@ -26,14 +28,17 @@ export async function createApplication(params: {
 }
 
 export async function updateApplication(id: string, data: Record<string, unknown>) {
+  const prisma = await getSupabasePrisma();
   return prisma.application.update({ where: { id }, data });
 }
 
 export async function deleteApplication(id: string) {
+  const prisma = await getSupabasePrisma();
   return prisma.application.delete({ where: { id } });
 }
 
 export async function getParentApplications(parentId: string, studentId?: string) {
+  const prisma = await getSupabasePrisma();
   const links = await prisma.studentParent.findMany({
     where: { parentId },
     select: { studentId: true },
