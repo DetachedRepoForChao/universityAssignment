@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "../../../lib/prisma";
 import { comparePassword, signJWT } from "../../../services/auth";
-import cookie from "cookie";
+import { serialize } from "cookie";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
@@ -35,7 +35,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   console.log("Token length:", token.length);
   console.log("Token preview:", token.substring(0, 50) + "...");
   
-  const serialized = cookie.serialize("auth_token", token, {
+  const serialized = serialize("auth_token", token, {
     httpOnly: true,
     path: "/",
     sameSite: "lax",

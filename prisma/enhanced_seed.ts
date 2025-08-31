@@ -1,20 +1,31 @@
 import { PrismaClient } from "../src/generated/prisma";
 import { hashPassword } from "../src/services/auth";
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL,
+    },
+  },
+});
 
 async function main() {
   console.log("开始创建增强测试数据...");
 
-  // 清理现有数据
-  await prisma.applicationRequirement.deleteMany({});
-  await prisma.applicationDocument.deleteMany({});
-  await prisma.application.deleteMany({});
-  await prisma.studentParent.deleteMany({});
-  await prisma.parent.deleteMany({});
-  await prisma.student.deleteMany({});
-  await prisma.admin.deleteMany({});
-  await prisma.university.deleteMany();
+  // 清理现有数据（按正确的外键依赖顺序）
+  try {
+    await prisma.applicationRequirement.deleteMany({});
+    await prisma.applicationDocument.deleteMany({});
+    await prisma.application.deleteMany({});
+    await prisma.studentParent.deleteMany({});
+    await prisma.parent.deleteMany({});
+    await prisma.student.deleteMany({});
+    await prisma.admin.deleteMany({});
+    await prisma.university.deleteMany({});
+    console.log("✅ 现有数据清理完成");
+  } catch (error) {
+    console.log("⚠️ 数据清理时出现错误（可能是首次运行）:", error instanceof Error ? error.message : String(error));
+  }
 
   // 创建密码哈希
   const studentPwd = await hashPassword("student123");
@@ -28,12 +39,7 @@ async function main() {
       email: "admin@example.com",
       passwordHash: adminPwd,
       role: "super_admin",
-      permissions: {
-        canManageUsers: true,
-        canManageUniversities: true,
-        canViewAllApplications: true,
-        canSyncExternalData: true
-      }
+      permissions: ["user_management", "data_sync", "system_monitoring"]
     },
   });
 

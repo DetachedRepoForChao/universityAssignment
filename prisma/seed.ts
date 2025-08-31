@@ -186,6 +186,7 @@ async function main() {
 	// Users
 	const studentPwd = await hashPassword("student123");
 	const parentPwd = await hashPassword("parent123");
+	const adminPwd = await hashPassword("admin123");
 
 	// Create multiple students
 	const students = await Promise.all([
@@ -423,10 +424,22 @@ async function main() {
 
 	await prisma.applicationRequirement.createMany({ data: requirements });
 
+	// Create admin user
+	const admin = await prisma.admin.create({
+		data: {
+			name: "System Administrator",
+			email: "admin@example.com",
+			passwordHash: adminPwd,
+			role: "super_admin",
+			permissions: { set: ["user_management", "data_sync", "system_monitoring"] },
+		},
+	});
+
 	console.log("Seed completed with rich data:");
 	console.log(`- ${universities.length} universities`);
 	console.log(`- ${students.length} students`);
 	console.log(`- ${parents.length} parents`);
+	console.log(`- 1 admin`);
 	console.log(`- ${applications.length} applications`);
 	console.log(`- ${requirements.length} requirements`);
 }
