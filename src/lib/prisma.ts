@@ -14,16 +14,6 @@ const createPrismaClient = () => {
         url: process.env.DATABASE_URL,
       },
     },
-    // 禁用连接池，使用单连接模式
-    __internal: {
-      engine: {
-        connectionLimit: 1,
-        pool: {
-          min: 1,
-          max: 1,
-        },
-      },
-    },
   });
 };
 
