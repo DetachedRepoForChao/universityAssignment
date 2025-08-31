@@ -217,11 +217,13 @@ export default function ParentView() {
                                         setEditingNote(null);
                                         setEditContent("");
                                         // 重新加载申请数据
-                                        const q = new URLSearchParams({ studentId: selected }).toString();
-                                        const res = await fetch(`/api/parent/applications?${q}`);
-                                        if (res.ok) {
-                                          const updatedApps = await res.json();
-                                          setApps(updatedApps);
+                                        if (selected) {
+                                          const q = new URLSearchParams({ studentId: selected }).toString();
+                                          const res = await fetch(`/api/parent/applications?${q}`);
+                                          if (res.ok) {
+                                            const updatedApps = await res.json();
+                                            setApps(updatedApps);
+                                          }
                                         }
                                       } catch (err) {
                                         console.error('Failed to update note:', err);
@@ -270,11 +272,13 @@ export default function ParentView() {
                                         method: 'DELETE'
                                       });
                                       // 重新加载申请数据
-                                      const q = new URLSearchParams({ studentId: selected }).toString();
-                                      const res = await fetch(`/api/parent/applications?${q}`);
-                                      if (res.ok) {
-                                        const updatedApps = await res.json();
-                                        setApps(updatedApps);
+                                      if (selected) {
+                                        const q = new URLSearchParams({ studentId: selected }).toString();
+                                        const res = await fetch(`/api/parent/applications?${q}`);
+                                        if (res.ok) {
+                                          const updatedApps = await res.json();
+                                          setApps(updatedApps);
+                                        }
                                       }
                                     } catch (err) {
                                       console.error('Failed to delete note:', err);
@@ -313,11 +317,13 @@ export default function ParentView() {
                         });
                         setNote("");
                         // 重新加载申请数据
-                        const q = new URLSearchParams({ studentId: selected }).toString();
-                        const res = await fetch(`/api/parent/applications?${q}`);
-                        if (res.ok) {
-                          const updatedApps = await res.json();
-                          setApps(updatedApps);
+                        if (selected) {
+                          const q = new URLSearchParams({ studentId: selected }).toString();
+                          const res = await fetch(`/api/parent/applications?${q}`);
+                          if (res.ok) {
+                            const updatedApps = await res.json();
+                            setApps(updatedApps);
+                          }
                         }
                       } catch (err) {
                         console.error('Failed to add note:', err);
