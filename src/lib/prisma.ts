@@ -5,10 +5,9 @@ declare global {
   var __prismaClient: PrismaClient | undefined;
 }
 
-// 创建Prisma客户端实例，解决prepared statement冲突
+// 创建Prisma客户端实例
 const createPrismaClient = () => {
   return new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : ['error'],
     datasources: {
       db: {
         url: process.env.DATABASE_URL,
@@ -23,7 +22,7 @@ export const prisma: PrismaClient =
     ? (global.__prismaClient ?? createPrismaClient())
     : createPrismaClient();
 
-// 在开发环境中使用全局实例（但每次请求都重新创建）
+// 在开发环境中使用全局实例
 if (process.env.NODE_ENV !== "production") {
   global.__prismaClient = prisma;
 }
@@ -36,20 +35,6 @@ process.on('beforeExit', async () => {
     console.error('关闭Prisma连接失败:', error);
   }
 });
-
-// 添加错误处理
-prisma.$on('error', (e) => {
-  console.error('Prisma Error:', e);
-});
-
-// 添加查询日志（仅开发环境）
-if (process.env.NODE_ENV === 'development') {
-  prisma.$on('query', (e) => {
-    console.log('Query: ' + e.query);
-    console.log('Params: ' + e.params);
-    console.log('Duration: ' + e.duration + 'ms');
-  });
-}
 
 
 
