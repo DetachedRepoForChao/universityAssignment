@@ -28,9 +28,10 @@ async function main() {
   console.log("🏫 创建大学数据...");
   const universities = await Promise.all([
     prisma.university.upsert({
-      where: { name: "MIT" },
+      where: { externalId: "mit-001" },
       update: {},
       create: {
+        externalId: "mit-001",
         name: "MIT", 
         country: "USA", 
         state: "MA",
@@ -44,9 +45,10 @@ async function main() {
       }
     }),
     prisma.university.upsert({
-      where: { name: "Stanford University" },
+      where: { externalId: "stanford-001" },
       update: {},
       create: {
+        externalId: "stanford-001",
         name: "Stanford University", 
         country: "USA", 
         state: "CA",
@@ -60,9 +62,10 @@ async function main() {
       }
     }),
     prisma.university.upsert({
-      where: { name: "Harvard University" },
+      where: { externalId: "harvard-001" },
       update: {},
       create: {
+        externalId: "harvard-001",
         name: "Harvard University", 
         country: "USA", 
         state: "MA",
@@ -76,9 +79,10 @@ async function main() {
       }
     }),
     prisma.university.upsert({
-      where: { name: "UC Berkeley" },
+      where: { externalId: "ucb-001" },
       update: {},
       create: {
+        externalId: "ucb-001",
         name: "UC Berkeley", 
         country: "USA", 
         state: "CA",
@@ -197,17 +201,17 @@ async function main() {
   console.log("📝 创建申请数据...");
   const applications = [];
   
-  // Alice 的申请
-  const aliceApps = await Promise.all([
-    prisma.application.upsert({
-      where: {
-        studentId_universityId: {
-          studentId: students[0].id,
-          universityId: universities[0].id
-        }
-      },
-      update: {},
-      create: {
+  // Alice 的申请 - 使用 findFirst + create 避免唯一索引问题
+  const existingApp1 = await prisma.application.findFirst({
+    where: {
+      studentId: students[0].id,
+      universityId: universities[0].id
+    }
+  });
+  
+  if (!existingApp1) {
+    const app1 = await prisma.application.create({
+      data: {
         studentId: students[0].id,
         universityId: universities[0].id,
         applicationType: "EARLY_DECISION",
@@ -216,16 +220,22 @@ async function main() {
         submittedDate: new Date("2024-10-15"),
         syncedAt: new Date(),
       },
-    }),
-    prisma.application.upsert({
-      where: {
-        studentId_universityId: {
-          studentId: students[0].id,
-          universityId: universities[1].id
-        }
-      },
-      update: {},
-      create: {
+    });
+    applications.push(app1);
+  } else {
+    applications.push(existingApp1);
+  }
+
+  const existingApp2 = await prisma.application.findFirst({
+    where: {
+      studentId: students[0].id,
+      universityId: universities[1].id
+    }
+  });
+  
+  if (!existingApp2) {
+    const app2 = await prisma.application.create({
+      data: {
         studentId: students[0].id,
         universityId: universities[1].id,
         applicationType: "EARLY_ACTION",
@@ -233,10 +243,11 @@ async function main() {
         deadline: new Date("2024-11-01"),
         syncedAt: new Date(),
       },
-    })
-  ]);
-
-  applications.push(...aliceApps);
+    });
+    applications.push(app2);
+  } else {
+    applications.push(existingApp2);
+  }
 
   console.log("✅ 测试数据创建完成！");
   console.log(`- 1个管理员账号`);
