@@ -124,7 +124,7 @@ export default function DebugJWT() {
         <div className="p-4 border rounded">
           <h2 className="font-semibold mb-2">调试步骤</h2>
           <ol className="text-sm text-gray-600 list-decimal list-inside space-y-1">
-            <li>点击"测试登录流程"按钮</li>
+            <li>点击&quot;测试登录流程&quot;按钮</li>
             <li>查看调试信息</li>
             <li>检查浏览器控制台日志</li>
             <li>在开发者工具中查看Cookie</li>
@@ -135,4 +135,5 @@ export default function DebugJWT() {
     </div>
   );
 }
+
 

@@ -55,7 +55,7 @@ export default function ParentView() {
 
   useEffect(() => {
     if (!selected) return;
-    const q = new URLSearchParams({ studentId: selected }).toString();
+    const q = new URLSearchParams({ studentId: selected || '' }).toString();
     setLoading(true);
     setError(null);
     
@@ -218,7 +218,7 @@ export default function ParentView() {
                                         setEditContent("");
                                         // 重新加载申请数据
                                         if (selected) {
-                                          const q = new URLSearchParams({ studentId: selected }).toString();
+                                          const q = new URLSearchParams({ studentId: selected || '' }).toString();
                                           const res = await fetch(`/api/parent/applications?${q}`);
                                           if (res.ok) {
                                             const updatedApps = await res.json();
@@ -273,7 +273,7 @@ export default function ParentView() {
                                       });
                                       // 重新加载申请数据
                                       if (selected) {
-                                        const q = new URLSearchParams({ studentId: selected }).toString();
+                                        const q = new URLSearchParams({ studentId: selected || '' }).toString();
                                         const res = await fetch(`/api/parent/applications?${q}`);
                                         if (res.ok) {
                                           const updatedApps = await res.json();
@@ -318,7 +318,7 @@ export default function ParentView() {
                         setNote("");
                         // 重新加载申请数据
                         if (selected) {
-                          const q = new URLSearchParams({ studentId: selected }).toString();
+                          const q = new URLSearchParams({ studentId: selected || '' }).toString();
                           const res = await fetch(`/api/parent/applications?${q}`);
                           if (res.ok) {
                             const updatedApps = await res.json();
@@ -386,7 +386,7 @@ export default function ParentView() {
                                     method: 'DELETE'
                                   });
                                   // 重新加载数据
-                                  const q = new URLSearchParams({ studentId: selected }).toString();
+                                  const q = new URLSearchParams({ studentId: selected || '' }).toString();
                                   const res = await fetch(`/api/parent/communications?${q}`);
                                   if (res.ok) {
                                     const updatedComms = await res.json();
@@ -463,7 +463,7 @@ export default function ParentView() {
                                     method: 'DELETE'
                                   });
                                   // 重新加载数据
-                                  const q = new URLSearchParams({ studentId: selected }).toString();
+                                  const q = new URLSearchParams({ studentId: selected || '' }).toString();
                                   const res = await fetch(`/api/parent/observations?${q}`);
                                   if (res.ok) {
                                     const updatedObs = await res.json();
@@ -567,7 +567,7 @@ export default function ParentView() {
                     
                     if (response.ok) {
                       // 重新加载数据
-                      const q = new URLSearchParams({ studentId: selected }).toString();
+                      const q = new URLSearchParams({ studentId: selected || '' }).toString();
                       const res = await fetch(`/api/parent/communications?${q}`);
                       if (res.ok) {
                         const updatedComms = await res.json();
@@ -672,7 +672,7 @@ export default function ParentView() {
                     
                     if (response.ok) {
                       // 重新加载数据
-                      const q = new URLSearchParams({ studentId: selected }).toString();
+                      const q = new URLSearchParams({ studentId: selected || '' }).toString();
                       const res = await fetch(`/api/parent/observations?${q}`);
                       if (res.ok) {
                         const updatedObs = await res.json();

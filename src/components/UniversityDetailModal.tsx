@@ -255,3 +255,4 @@ export default function UniversityDetailModal({ university, isOpen, onClose }: U
 }
 
 
+

@@ -86,7 +86,7 @@ export default function TestAutoLogout() {
               <p>• 此页面用于测试自动登出功能</p>
               <p>• 当您10分钟不操作时，系统会弹出警告弹窗</p>
               <p>• 警告弹窗会显示30秒倒计时</p>
-              <p>• 您可以点击"继续使用"按钮延长会话</p>
+              <p>• 您可以点击&quot;继续使用&quot;按钮延长会话</p>
               <p>• 如果30秒内没有操作，系统会自动登出</p>
               <p>• 用户活动（鼠标移动、点击、键盘输入等）会重置计时器</p>
             </div>
@@ -95,7 +95,7 @@ export default function TestAutoLogout() {
           <div className="mt-8 bg-yellow-50 border border-yellow-200 rounded-lg p-6">
             <h3 className="text-lg font-semibold text-yellow-800 mb-2">注意事项</h3>
             <p className="text-yellow-700">
-              请确保您已经登录系统，否则自动登出功能不会启动。您可以通过点击"返回仪表板"来检查登录状态。
+              请确保您已经登录系统，否则自动登出功能不会启动。您可以通过点击&quot;返回仪表板&quot;来检查登录状态。
             </p>
           </div>
         </div>
@@ -103,5 +103,6 @@ export default function TestAutoLogout() {
     </div>
   );
 }
+
 
 
