@@ -1,9 +1,5 @@
 {
   "version": 2,
-  "env": {
-    "DATABASE_URL": "@database_url",
-    "JWT_SECRET": "@jwt_secret"
-  },
   "functions": {
     "src/pages/api/**/*.ts": {
       "maxDuration": 30
