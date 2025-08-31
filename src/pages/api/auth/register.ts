@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "../../../lib/prisma";
 import { hashPassword, signJWT } from "../../../services/auth";
-import cookie from "cookie";
+import { serialize } from "cookie";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
@@ -32,7 +32,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const token = signJWT({ id: user.id, role, email });
-  const serialized = cookie.serialize("auth_token", token, {
+  const serialized = serialize("auth_token", token, {
     httpOnly: true,
     path: "/",
     sameSite: "lax",

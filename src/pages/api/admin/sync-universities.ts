@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import cookie from "cookie";
+import { parse } from "cookie";
 import { verifyJWT, requireRole } from "../../../services/auth";
 import { fetchCommonAppUniversities, normalizeCommonApp } from "../../../services/integrations/commonApp";
 import { fetchOpenDataUniversities, normalizeOpenData } from "../../../services/integrations/openData";
@@ -9,7 +9,7 @@ import { prisma } from "../../../lib/prisma";
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const authHeader = req.headers.authorization;
   const tokenFromHeader = authHeader?.startsWith("Bearer ") ? authHeader.split(" ")[1] : undefined;
-  const cookies = req.headers.cookie ? cookie.parse(req.headers.cookie) : {};
+  const cookies = req.headers.cookie ? parse(req.headers.cookie) : {};
   const token = tokenFromHeader ?? cookies["auth_token"];
   const user = token ? verifyJWT(token) : null;
   try { requireRole(user, ["admin"]); } catch { return res.status(403).json({ error: "Unauthorized" }); }

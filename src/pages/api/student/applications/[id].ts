@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { verifyJWT, requireRole } from "../../../../services/auth";
-import cookie from "cookie";
+import { parse } from "cookie";
 import { updateApplication, deleteApplication } from "../../../../services/applicationService";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -10,7 +10,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const authHeader = req.headers.authorization;
     const tokenFromHeader = authHeader?.startsWith("Bearer ") ? authHeader.split(" ")[1] : undefined;
-    const cookies = req.headers.cookie ? cookie.parse(req.headers.cookie) : {};
+    const cookies = req.headers.cookie ? parse(req.headers.cookie) : {};
     const token = tokenFromHeader ?? cookies["auth_token"];
     const user = token ? verifyJWT(token) : null;
 

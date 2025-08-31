@@ -1,12 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import cookie from "cookie";
+import { serialize } from "cookie";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
     res.setHeader("Allow", ["POST"]);
     return res.status(405).end("Method Not Allowed");
   }
-  const serialized = cookie.serialize("auth_token", "", {
+  const serialized = serialize("auth_token", "", {
     httpOnly: true,
     path: "/",
     sameSite: "lax",
