@@ -1,7 +1,14 @@
 {
   "version": 2,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    }
+  ],
   "env": {
-    "NODE_ENV": "production"
+    "DATABASE_URL": "@database_url",
+    "JWT_SECRET": "@jwt_secret"
   },
   "functions": {
     "src/pages/api/**/*.ts": {
